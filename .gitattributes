@@ -1,0 +1,10 @@
+# Auto detect text files and perform LF normalization
+* text=auto eol=lf
+
+*.bicep text eol=lf
+*.bicepparam text eol=lf
+*.json text eol=lf
+*.py text eol=lf
+*.md text eol=lf
+*.sh text eol=lf
+Makefile text eol=lf
