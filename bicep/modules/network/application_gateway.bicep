@@ -105,6 +105,11 @@ resource appGateway 'Microsoft.Network/applicationGateways@2023-09-01' = {
     firewallPolicy: {
       id: wafPolicy.id
     }
+    sslPolicy: {
+      policyType: 'Predefined'
+      policyName: 'AppGwSslPolicy20220101'
+      minProtocolVersion: 'TLSv1_2'
+    }
     gatewayIPConfigurations: [
       {
         name: 'appGatewayIpConfig'

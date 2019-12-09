@@ -127,7 +127,7 @@ class PolicyEvaluator:
         name = file_path.name
 
         # Rule SEC-001: Confidential VM / AKS SEV-SNP
-        if "aks_confidential" in name or "confidential_vm" in name:
+        if "Microsoft.ContainerService/managedClusters" in content or "Microsoft.Compute/virtualMachineScaleSets" in content or "aks_confidential" in name or "confidential_vm" in name:
             rule = self.rule_map["SEC-001"]
             has_confidential = (
                 "ConfidentialVM" in content
@@ -136,7 +136,7 @@ class PolicyEvaluator:
                 or "amd-sev-snp" in content
             )
             has_vtpm = "vTpmEnabled: true" in content or "enableVtpm" in content
-            passed = has_confidential and (has_vtpm or "aks" in name)
+            passed = has_confidential and (has_vtpm or "aks" in name or "managedClusters" in content)
             findings.append(
                 PolicyFinding(
                     rule=rule,
@@ -150,7 +150,16 @@ class PolicyEvaluator:
             )
 
         # Rule SEC-002: Prohibit Public IPs on Internal Workloads
-        if "aks" in name or "confidential_vm" in name or "postgresql" in name or "cosmos" in name:
+        if (
+            "Microsoft.ContainerService/managedClusters" in content
+            or "Microsoft.Compute/virtualMachineScaleSets" in content
+            or "Microsoft.DBforPostgreSQL/flexibleServers" in content
+            or "Microsoft.DocumentDB/databaseAccounts" in content
+            or "aks" in name
+            or "confidential_vm" in name
+            or "postgresql" in name
+            or "cosmos" in name
+        ):
             rule = self.rule_map["SEC-002"]
             has_public_ip_disabled = (
                 "enableNodePublicIP: false" in content
@@ -158,7 +167,7 @@ class PolicyEvaluator:
                 or "publicNetworkAccess: publicNetworkAccess" in content
                 or "delegatedSubnetResourceId" in content
                 or ("virtualMachineScaleSets" in content and "publicIPAddressConfiguration" not in content)
-            )
+            ) and "enableNodePublicIP: true" not in content
             findings.append(
                 PolicyFinding(
                     rule=rule,
@@ -172,9 +181,9 @@ class PolicyEvaluator:
             )
 
         # Rule SEC-003: Minimum TLS 1.2
-        if "storage" in name or "app_gateway" in name or "service_bus" in name or "event_hub" in name:
+        if "Microsoft.Storage/storageAccounts" in content or "Microsoft.Network/applicationGateways" in content or "Microsoft.ServiceBus/namespaces" in content or "Microsoft.EventHub/namespaces" in content:
             rule = self.rule_map["SEC-003"]
-            has_tls = "TLS1_2" in content or "minimumTlsVersion: '1.2'" in content or "minimumTlsVersion: 'TLS1_2'" in content
+            has_tls = "TLS1_2" in content or "minimumTlsVersion: '1.2'" in content or "minimumTlsVersion: 'TLS1_2'" in content or "TLSv1_2" in content
             findings.append(
                 PolicyFinding(
                     rule=rule,
@@ -186,14 +195,14 @@ class PolicyEvaluator:
             )
 
         # Rule SEC-004: CMEK and Double Encryption
-        if "disk_encryption" in name or "storage" in name or "postgresql" in name:
+        if "Microsoft.Compute/diskEncryptionSets" in content or "Microsoft.Storage/storageAccounts" in content or "Microsoft.DBforPostgreSQL/flexibleServers" in content:
             rule = self.rule_map["SEC-004"]
             has_cmek = (
                 "DoubleEncryption" in content
                 or "keyvaultproperties" in content
                 or "keyVaultKeyId" in content
                 or "dataEncryption" in content
-            )
+            ) and "keySource: 'Microsoft.Storage'" not in content
             findings.append(
                 PolicyFinding(
                     rule=rule,
@@ -205,7 +214,7 @@ class PolicyEvaluator:
             )
 
         # Rule SEC-005: Purge Protection & Soft Delete
-        if "key_vault" in name or "managed_hsm" in name:
+        if "Microsoft.KeyVault/vaults" in content or "Microsoft.KeyVault/managedHSMs" in content:
             rule = self.rule_map["SEC-005"]
             has_purge = "enablePurgeProtection: true" in content
             has_soft_delete = "enableSoftDelete: true" in content or "softDeleteRetentionInDays" in content
@@ -221,7 +230,7 @@ class PolicyEvaluator:
             )
 
         # Rule SEC-006: Default Deny NSG
-        if "network_security_group" in name or "sovereign_enclave" in name:
+        if "Microsoft.Network/networkSecurityGroups" in content or "sovereign_enclave" in name:
             rule = self.rule_map["SEC-006"]
             has_deny = (
                 "Deny" in content
@@ -239,7 +248,7 @@ class PolicyEvaluator:
             )
 
         # Rule SEC-008: Disable Local Auth
-        if "event_hub" in name or "service_bus" in name or "storage" in name:
+        if "Microsoft.EventHub/namespaces" in content or "Microsoft.ServiceBus/namespaces" in content or "Microsoft.Storage/storageAccounts" in content:
             rule = self.rule_map["SEC-008"]
             has_disable_local = "disableLocalAuth: true" in content or "allowSharedKeyAccess: false" in content
             findings.append(
