@@ -16,7 +16,7 @@ from engine.cost_carbon import CloudEconomicsEngine
 from engine.graph import DependencyDAG
 from engine.policy_evaluator import PolicyEvaluator
 from engine.simulator import ARMDeploymentSimulator, SimulationConfig
-from engine.visualizer import TerminalVisualizer, BOLD, GREEN, RED, RESET, YELLOW
+from engine.visualizer import TerminalVisualizer, BOLD, CYAN, GREEN, RED, RESET, YELLOW
 
 
 def build_camber_dag() -> DependencyDAG:
